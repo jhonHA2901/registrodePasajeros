@@ -3,7 +3,6 @@ services:
   - type: web # El tipo es 'web' para sitios estáticos
     name: registrop1-frontend
     runtime: static # Y el runtime es 'static'
-    plan: free
     rootDir: frontend
     routes:
       - type: rewrite
