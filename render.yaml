@@ -20,7 +20,7 @@ services:
         value: production
 
   # 3. Frontend - Sitio Estático (HTML, CSS, JS)
-  - type: static
+  - type: static_site
     name: registrop1-frontend
     region: ohio
     plan: free
