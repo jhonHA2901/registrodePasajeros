@@ -1,0 +1,24 @@
+{
+  "name": "registro-pasajeros",
+  "version": "1.0.0",
+  "description": "Aplicación web para el registro de pasajeros del Metropolitano en la ruta Lima - Chorrillos",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js",
+    "install-backend": "cd backend && npm install"
+  },
+  "keywords": [
+    "metropolitano",
+    "pasajeros",
+    "registro",
+    "express",
+    "mysql"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {},
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  }
+}
