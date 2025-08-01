@@ -39,3 +39,4 @@ config.local.js
 # Archivos temporales
 /tmp
 /temp
+temp-repo/
