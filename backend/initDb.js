@@ -13,41 +13,47 @@ const sqlCommands = sqlScript
   .filter(command => command.trim() !== '' && !command.trim().toLowerCase().startsWith('create database') && !command.trim().toLowerCase().startsWith('\\c'));
 
 async function initializeDatabase() {
-  console.log('Iniciando la inicialización de la base de datos...');
+  let retries = 5;
+  while (retries > 0) {
+    try {
+      console.log(`(${6 - retries}/5) Intentando conectar a la base de datos para inicialización...`);
+      await tryInitialize();
+      console.log('>>> Base de datos inicializada con éxito.');
+      return true; // Salir si la inicialización es exitosa
+    } catch (error) {
+      retries--;
+      console.error(`Error en el intento de inicialización: ${error.message}`);
+      if (retries > 0) {
+        console.log(`Reintentando en 5 segundos...`);
+        await new Promise(res => setTimeout(res, 5000));
+      } else {
+        console.error('No se pudo inicializar la base de datos después de varios intentos.');
+        throw new Error('No se pudo conectar a la base de datos para la inicialización.');
+      }
+    }
+  }
+}
+
+async function tryInitialize() {
   let client;
   try {
-    // Usamos el pool importado de db.js que ya tiene la configuración correcta
     client = await pool.connect();
-    console.log('Conexión a la base de datos establecida para inicialización.');
-
-    // Ejecutar cada comando SQL del script
+    console.log('Conexión establecida. Ejecutando scripts SQL...');
     for (const command of sqlCommands) {
       const trimmedCommand = command.trim();
       if (trimmedCommand) {
         try {
           await client.query(trimmedCommand + ';');
-          console.log(`Comando ejecutado: ${trimmedCommand.substring(0, 60)}...`);
         } catch (cmdError) {
-          // Ignorar errores de 'tabla ya existe' para que el script sea re-ejecutable
-          if (cmdError.code === '42P07') { // 'duplicate_table'
-            console.log(`Tabla ya existe, omitiendo comando: ${trimmedCommand.substring(0, 60)}...`);
-          } else {
-            console.warn(`Advertencia al ejecutar comando: ${cmdError.message}`);
+          if (cmdError.code !== '42P07') { // Ignorar si la tabla ya existe
+            console.warn(`Advertencia en comando SQL: ${cmdError.message}`);
           }
         }
       }
     }
-
-    console.log('Base de datos inicializada correctamente.');
-    return true;
-  } catch (error) {
-    console.error('Error fatal durante la inicialización de la base de datos:', error.message);
-    // No reintentamos aquí, dejamos que el test de conexión de server.js lo maneje
-    throw new Error('No se pudo conectar a la base de datos para la inicialización.');
   } finally {
     if (client) {
       client.release();
-      console.log('Cliente de inicialización liberado.');
     }
   }
 }
