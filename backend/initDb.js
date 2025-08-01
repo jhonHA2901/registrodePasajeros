@@ -51,9 +51,6 @@ async function initializeDatabase() {
     }
   }
 }
-  
-
-}
 
 // Exportar la función para usarla en server.js
 module.exports = { initializeDatabase };
