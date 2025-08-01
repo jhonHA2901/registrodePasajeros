@@ -5,7 +5,7 @@ services:
     env: node
     region: ohio
     buildCommand: npm install && cd backend && npm install
-    startCommand: cd backend && npm run check-render-db && npm start
+    startCommand: cd backend && npm run fix-localhost && npm run fix-render && npm run check-render-db && npm start
     envVars:
       - key: NODE_ENV
         value: production
@@ -50,3 +50,4 @@ databases:
   - name: registrop1-db
     plan: free
     type: mysql
+    ipAllowList: [] # Permitir conexiones desde cualquier lugar (incluidos los servicios de Render)

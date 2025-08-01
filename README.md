@@ -173,6 +173,8 @@ npm run check-performance
 
 Para instrucciones detalladas sobre el despliegue en Render, consulta el archivo [DEPLOY_RENDER.md](./DEPLOY_RENDER.md).
 
+Si encuentras problemas durante el despliegue o la ejecución en Render, consulta la guía de solución de problemas: [RENDER_TROUBLESHOOTING.md](./RENDER_TROUBLESHOOTING.md).
+
 ### Backend
 
 1. Crear un nuevo servicio web en Render

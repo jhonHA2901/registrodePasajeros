@@ -27,8 +27,16 @@ async function initializeDatabase() {
     connectTimeout: 30000, // 30 segundos de timeout para la conexión
     waitForConnections: true,
     connectionLimit: 10,
-    queueLimit: 0
+    queueLimit: 0,
+    ssl: isRender ? {rejectUnauthorized: true} : false // Habilitar SSL en Render
   };
+  
+  // Mostrar información detallada de la conexión
+  console.log('Información detallada de la conexión:');
+  console.log(`- Entorno: ${isRender ? 'Render (producción)' : 'Local (desarrollo)'}`); 
+  console.log(`- Host: ${config.host}`); 
+  console.log(`- Usuario: ${config.user}`); 
+  console.log(`- SSL: ${isRender ? 'Habilitado' : 'Deshabilitado'}`);
   
   console.log(`Intentando conectar a: ${config.host} con usuario: ${config.user}`);
 

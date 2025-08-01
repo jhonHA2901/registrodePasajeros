@@ -11,20 +11,31 @@ async function checkRenderDb() {
   
   // Verificar si estamos en Render
   const isRender = process.env.RENDER_EXTERNAL_URL ? true : false;
-  console.log(`Entorno detectado: ${isRender ? 'Render (producción)' : 'Local (desarrollo)'}`);
+  console.log(`Entorno detectado: ${isRender ? 'Render (producción)' : 'Local (desarrollo)'}`); 
   
-  // Verificar variables de entorno de la base de datos
-  console.log('\nVariables de entorno de la base de datos:');
-  const dbVars = {
-    DB_HOST: process.env.DB_HOST || 'no definido',
-    DB_USER: process.env.DB_USER || 'no definido',
-    DB_NAME: process.env.DB_NAME || 'no definido',
-    DB_PASSWORD: process.env.DB_PASSWORD ? '********' : 'no definido'
-  };
+  // Verificar variables de entorno críticas
+  console.log('\nVerificando variables de entorno de la base de datos:');
+  let hasErrors = false;
   
-  Object.entries(dbVars).forEach(([key, value]) => {
-    console.log(`${key}: ${value}`);
-  });
+  if (!process.env.DB_HOST) {
+    console.log('❌ DB_HOST no está definido. Usando valor por defecto: localhost');
+    if (isRender) {
+      console.log('⚠️ ERROR CRÍTICO: Usar localhost en Render causará problemas de conexión');
+      console.log('   → En Render, DB_HOST debe ser la dirección del servicio de base de datos');
+      console.log('   → Verifica en render.yaml que el servicio de base de datos esté correctamente configurado');
+      console.log('   → El formato correcto es: ${services.registrop1-db.host}');
+      hasErrors = true;
+    }
+  } else {
+    console.log(`✅ DB_HOST: ${process.env.DB_HOST}`);
+    if (isRender && (process.env.DB_HOST === 'localhost' || process.env.DB_HOST.includes('127.0.0.1'))) {
+      console.log('⚠️ ERROR CRÍTICO: No se debe usar localhost o 127.0.0.1 como DB_HOST en Render');
+      console.log('   → En Render, la base de datos debe estar en un servicio separado');
+      console.log('   → Verifica que en render.yaml esté configurado correctamente el servicio de base de datos');
+      console.log('   → Y que las variables de entorno estén configuradas para usar ese servicio');
+      hasErrors = true;
+    }
+  }
   
   // Verificar si las variables son las esperadas en Render
   if (isRender) {
@@ -58,8 +69,17 @@ async function checkRenderDb() {
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '123456',
     database: process.env.DB_NAME || 'registro_pasajeros',
-    connectTimeout: 10000 // 10 segundos
+    connectTimeout: 10000, // 10 segundos
+    ssl: isRender ? {rejectUnauthorized: true} : false // Habilitar SSL en Render
   };
+  
+  // Mostrar información detallada de la conexión
+  console.log('Información detallada de la conexión:');
+  console.log(`- Entorno: ${isRender ? 'Render (producción)' : 'Local (desarrollo)'}`); 
+  console.log(`- Host: ${config.host}`); 
+  console.log(`- Usuario: ${config.user}`); 
+  console.log(`- Base de datos: ${config.database}`);
+  console.log(`- SSL: ${isRender ? 'Habilitado' : 'Deshabilitado'}`);
   
   try {
     console.log(`Conectando a ${config.host} con usuario ${config.user}...`);

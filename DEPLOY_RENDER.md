@@ -187,3 +187,16 @@ npm run render-info
 ```
 npm run init-db
 ```
+
+## Solución de Problemas
+
+Si encuentras problemas durante el despliegue o la ejecución en Render, consulta la guía detallada de solución de problemas:
+
+[RENDER_TROUBLESHOOTING.md](./RENDER_TROUBLESHOOTING.md)
+
+Esta guía incluye soluciones para los problemas más comunes, como:
+
+- Errores de conexión a la base de datos
+- Problemas con variables de entorno
+- Errores de configuración en render.yaml
+- Problemas de red y firewall

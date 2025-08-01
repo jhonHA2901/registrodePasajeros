@@ -1,5 +1,9 @@
 const mysql = require('mysql2/promise');
 
+// Verificar si estamos en Render
+const isRender = process.env.RENDER_EXTERNAL_URL ? true : false;
+console.log(`Entorno detectado en db.js: ${isRender ? 'Render (producción)' : 'Local (desarrollo)'}`); 
+
 // Configuración de la conexión a la base de datos
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
@@ -12,7 +16,8 @@ const pool = mysql.createPool({
   connectTimeout: 60000, // 60 segundos de timeout para la conexión
   // Eliminamos acquireTimeout y timeout que generan advertencias en MySQL2
   enableKeepAlive: true,
-  keepAliveInitialDelay: 10000 // 10 segundos de delay inicial para keep-alive
+  keepAliveInitialDelay: 10000, // 10 segundos de delay inicial para keep-alive
+  ssl: isRender ? {rejectUnauthorized: true} : false // Habilitar SSL en Render
 });
 
 // Función para probar la conexión
