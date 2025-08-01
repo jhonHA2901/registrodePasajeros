@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
+require('dotenv').config();
 const { testConnection } = require('./db');
+const { initializeDatabase } = require('./initDb');
 
 // Importar rutas
 const authRoutes = require('./routes/auth');
@@ -28,12 +30,16 @@ app.get('/', (req, res) => {
 // Iniciar servidor
 async function startServer() {
   try {
+    // Intentar inicializar la base de datos
+    console.log('Intentando inicializar la base de datos...');
+    await initializeDatabase();
+    
     // Probar conexión a la base de datos
     const dbConnected = await testConnection();
     
     if (dbConnected) {
       app.listen(PORT, '0.0.0.0', () => {
-        console.log(`Servidor corriendo en http://192.168.2.42:${PORT}`);
+        console.log(`Servidor corriendo en http://${process.env.NODE_ENV === 'production' ? 'tu-app.onrender.com' : '0.0.0.0'}:${PORT}`);
       });
     } else {
       console.error('No se pudo iniciar el servidor debido a problemas con la base de datos');

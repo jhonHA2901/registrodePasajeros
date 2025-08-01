@@ -48,6 +48,26 @@ Aplicación web para el registro de pasajeros del Metropolitano en la ruta Lima 
 ### Requisitos Previos
 
 - Node.js (v14 o superior)
+- MySQL (v8 o superior)
+
+### Despliegue en Render
+
+Este proyecto está configurado para ser desplegado en Render utilizando el archivo `render.yaml`.
+
+#### Pasos para el despliegue:
+
+1. Crea una cuenta en [Render](https://render.com)
+2. Conecta tu repositorio de GitHub
+3. Haz clic en "Blueprint" y selecciona el repositorio
+4. Render detectará automáticamente el archivo `render.yaml` y configurará los servicios
+5. Confirma la configuración y haz clic en "Apply"
+
+Render creará automáticamente:
+- Un servicio web para el backend
+- Un servicio web para el frontend
+- Una base de datos MySQL
+
+La base de datos se inicializará automáticamente gracias al script `initDb.js`.
 - MySQL (v5.7 o superior)
 
 ### Pasos de Instalación

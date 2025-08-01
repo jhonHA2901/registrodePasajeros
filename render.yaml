@@ -1,0 +1,45 @@
+services:
+  # Servicio para el backend
+  - type: web
+    name: registrop1-backend
+    env: node
+    buildCommand: cd backend && npm install && npm run build
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: DB_HOST
+        fromDatabase:
+          name: registrop1-db
+          property: host
+      - key: DB_USER
+        fromDatabase:
+          name: registrop1-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: registrop1-db
+          property: password
+      - key: DB_NAME
+        fromDatabase:
+          name: registrop1-db
+          property: database
+
+  # Servicio para el frontend
+  - type: web
+    name: registrop1-frontend
+    env: static
+    buildCommand: echo "No build step needed for static site"
+    staticPublishPath: ./frontend
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+databases:
+  # Base de datos MySQL
+  - name: registrop1-db
+    plan: free
+    type: mysql

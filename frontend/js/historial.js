@@ -1,5 +1,5 @@
-// Configuración de la URL base de la API
-const API_URL = 'http://192.168.2.42:3000/api';
+// Importar la configuración de la API
+const API_URL = getApiUrl();
 
 // Elementos del DOM
 const selectorPasajeroCard = document.getElementById('selector-pasajero-card');
