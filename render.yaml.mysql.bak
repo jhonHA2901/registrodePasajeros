@@ -5,7 +5,7 @@ services:
     env: node
     region: ohio
     buildCommand: npm install && cd backend && npm install
-    startCommand: node backend/server.js
+    startCommand: cd backend && npm run fix-localhost && npm run fix-render && npm run check-render-db && npm start
     envVars:
       - key: NODE_ENV
         value: production
@@ -27,10 +27,6 @@ services:
         fromDatabase:
           name: registrop1-db
           property: database
-      - key: DB_PORT
-        fromDatabase:
-          name: registrop1-db
-          property: port
     # Asegurar que la base de datos esté disponible antes de iniciar el backend
     dependsOn:
       - registrop1-db
@@ -50,8 +46,8 @@ services:
       - registrop1-backend
 
 databases:
-  # Base de datos PostgreSQL
+  # Base de datos MySQL
   - name: registrop1-db
     plan: free
-    type: postgres
+    type: mysql
     ipAllowList: [] # Permitir conexiones desde cualquier lugar (incluidos los servicios de Render)

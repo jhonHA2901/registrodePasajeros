@@ -12,8 +12,8 @@ async function registrarUsuario(req, res) {
 
   try {
     // Verificar si el DNI ya existe
-    const existingUsers = await pool.query('SELECT * FROM usuarios WHERE dni = $1', [dni]);
-    if (existingUsers.rows.length > 0) {
+    const [existingUsers] = await pool.query('SELECT * FROM usuarios WHERE dni = ?', [dni]);
+    if (existingUsers.length > 0) {
       return res.status(400).json({ error: 'El DNI ya está registrado' });
     }
 
@@ -22,14 +22,14 @@ async function registrarUsuario(req, res) {
     const hashedPassword = await bcrypt.hash(contraseña, salt);
 
     // Insertar nuevo usuario
-    const result = await pool.query(
-      'INSERT INTO usuarios (nombre, dni, correo, contraseña, rol) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+    const [result] = await pool.query(
+      'INSERT INTO usuarios (nombre, dni, correo, contraseña, rol) VALUES (?, ?, ?, ?, ?)',
       [nombre, dni, correo, hashedPassword, 'pasajero']
     );
 
     res.status(201).json({
       message: 'Usuario registrado correctamente',
-      userId: result.rows[0].id
+      userId: result.insertId
     });
   } catch (error) {
     console.error('Error al registrar usuario:', error);
@@ -48,13 +48,13 @@ async function login(req, res) {
 
   try {
     // Buscar usuario por DNI
-    const users = await pool.query('SELECT * FROM usuarios WHERE dni = $1', [dni]);
+    const [users] = await pool.query('SELECT * FROM usuarios WHERE dni = ?', [dni]);
     
-    if (users.rows.length === 0) {
+    if (users.length === 0) {
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
 
-    const user = users.rows[0];
+    const user = users[0];
 
     // Verificar contraseña
     const validPassword = await bcrypt.compare(contraseña, user.contraseña);

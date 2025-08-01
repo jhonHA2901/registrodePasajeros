@@ -12,26 +12,26 @@ async function registrarRuta(req, res) {
 
   try {
     // Verificar que el usuario existe
-    const usuarios = await pool.query('SELECT * FROM usuarios WHERE id = $1', [usuario_id]);
-    if (usuarios.rows.length === 0) {
+    const [usuarios] = await pool.query('SELECT * FROM usuarios WHERE id = ?', [usuario_id]);
+    if (usuarios.length === 0) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
 
     // Verificar que la ruta existe
-    const rutas = await pool.query('SELECT * FROM rutas WHERE id = $1', [ruta_id]);
-    if (rutas.rows.length === 0) {
+    const [rutas] = await pool.query('SELECT * FROM rutas WHERE id = ?', [ruta_id]);
+    if (rutas.length === 0) {
       return res.status(404).json({ error: 'Ruta no encontrada' });
     }
 
     // Insertar registro
-    const result = await pool.query(
-      'INSERT INTO registros (usuario_id, ruta_id, fecha_registro) VALUES ($1, $2, $3) RETURNING id',
+    const [result] = await pool.query(
+      'INSERT INTO registros (usuario_id, ruta_id, fecha_registro) VALUES (?, ?, ?)',
       [usuario_id, ruta_id, fecha_registro]
     );
 
     res.status(201).json({
       message: 'Ruta registrada correctamente',
-      registroId: result.rows[0].id
+      registroId: result.insertId
     });
   } catch (error) {
     console.error('Error al registrar ruta:', error);
@@ -45,22 +45,22 @@ async function obtenerHistorialUsuario(req, res) {
 
   try {
     // Verificar que el usuario existe
-    const usuarios = await pool.query('SELECT * FROM usuarios WHERE id = $1', [id_usuario]);
-    if (usuarios.rows.length === 0) {
+    const [usuarios] = await pool.query('SELECT * FROM usuarios WHERE id = ?', [id_usuario]);
+    if (usuarios.length === 0) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
 
     // Obtener historial con información de las rutas
-    const historial = await pool.query(
+    const [historial] = await pool.query(
       `SELECT r.id, r.fecha_registro, ru.origen, ru.destino 
        FROM registros r 
        JOIN rutas ru ON r.ruta_id = ru.id 
-       WHERE r.usuario_id = $1 
+       WHERE r.usuario_id = ? 
        ORDER BY r.fecha_registro DESC`,
       [id_usuario]
     );
 
-    res.status(200).json(historial.rows);
+    res.status(200).json(historial);
   } catch (error) {
     console.error('Error al obtener historial:', error);
     res.status(500).json({ error: 'Error al obtener historial' });
@@ -78,7 +78,7 @@ async function obtenerTodosRegistros(req, res) {
 
   try {
     // Obtener todos los registros con información de usuarios y rutas
-    const registros = await pool.query(
+    const [registros] = await pool.query(
       `SELECT r.id, r.fecha_registro, 
               u.id as usuario_id, u.nombre as nombre_usuario, u.dni, 
               ru.id as ruta_id, ru.origen, ru.destino 
@@ -88,7 +88,7 @@ async function obtenerTodosRegistros(req, res) {
        ORDER BY r.fecha_registro DESC`
     );
 
-    res.status(200).json(registros.rows);
+    res.status(200).json(registros);
   } catch (error) {
     console.error('Error al obtener registros:', error);
     res.status(500).json({ error: 'Error al obtener registros' });

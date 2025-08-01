@@ -1,25 +1,25 @@
 CREATE DATABASE registro_pasajeros;
-\c registro_pasajeros;
+USE registro_pasajeros;
 
 CREATE TABLE usuarios (
-  id SERIAL PRIMARY KEY,
+  id INT AUTO_INCREMENT PRIMARY KEY,
   nombre VARCHAR(100),
   dni VARCHAR(8) UNIQUE,
   correo VARCHAR(100),
   contraseña VARCHAR(255),
-  rol VARCHAR(10) DEFAULT 'pasajero' CHECK (rol IN ('admin', 'pasajero'))
+  rol ENUM('admin', 'pasajero') DEFAULT 'pasajero'
 );
 
 CREATE TABLE rutas (
-  id SERIAL PRIMARY KEY,
+  id INT AUTO_INCREMENT PRIMARY KEY,
   origen VARCHAR(100),
   destino VARCHAR(100)
 );
 
 CREATE TABLE registros (
-  id SERIAL PRIMARY KEY,
-  usuario_id INTEGER,
-  ruta_id INTEGER,
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  usuario_id INT,
+  ruta_id INT,
   fecha_registro DATE,
   FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
   FOREIGN KEY (ruta_id) REFERENCES rutas(id)

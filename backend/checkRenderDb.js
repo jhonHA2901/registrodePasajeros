@@ -1,13 +1,13 @@
 /**
- * Script para verificar la configuración de la base de datos en Render
+ * Script para verificar la configuración de la base de datos PostgreSQL en Render
  * Ejecutar con: node checkRenderDb.js
  */
 
 require('dotenv').config();
-const mysql = require('mysql2/promise');
+const { Pool } = require('pg');
 
 async function checkRenderDb() {
-  console.log('=== VERIFICADOR DE CONFIGURACIÓN DE BASE DE DATOS EN RENDER ===');
+  console.log('=== VERIFICADOR DE CONFIGURACIÓN DE BASE DE DATOS POSTGRESQL EN RENDER ===');
   
   // Verificar si estamos en Render
   const isRender = process.env.RENDER_EXTERNAL_URL ? true : false;
@@ -46,31 +46,40 @@ async function checkRenderDb() {
       console.error('❌ ERROR: DB_HOST está configurado como "localhost" en Render');
       console.error('   Esto indica que las variables de entorno de Render no se están aplicando correctamente.');
       console.error('   Verifica la configuración en render.yaml y asegúrate de que las variables se estén pasando desde la base de datos.');
-    } else if (process.env.DB_HOST && process.env.DB_HOST.includes('oregon-postgres.render.com')) {
-      console.log('✅ DB_HOST parece ser una URL válida de Render');
+    } else if (process.env.DB_HOST && process.env.DB_HOST.includes('postgres.render.com')) {
+      console.log('✅ DB_HOST parece ser una URL válida de Render para PostgreSQL');
     } else {
       console.log(`⚠️ DB_HOST no tiene el formato esperado para Render: ${process.env.DB_HOST}`);
     }
     
-    // En Render, DB_USER no debería ser root
-    if (process.env.DB_USER === 'root') {
-      console.error('❌ ERROR: DB_USER está configurado como "root" en Render');
+    // En Render, DB_USER no debería ser postgres (valor por defecto)
+    if (process.env.DB_USER === 'postgres') {
+      console.error('❌ ERROR: DB_USER está configurado como "postgres" en Render');
       console.error('   Esto indica que las variables de entorno de Render no se están aplicando correctamente.');
     } else {
-      console.log('✅ DB_USER no es "root", lo cual es correcto en Render');
+      console.log('✅ DB_USER no es "postgres", lo cual es correcto en Render');
+    }
+
+    // Verificar que DB_PORT esté definido
+    if (!process.env.DB_PORT) {
+      console.error('❌ ERROR: DB_PORT no está definido en Render');
+      console.error('   Esto puede causar problemas de conexión.');
+    } else {
+      console.log(`✅ DB_PORT está definido: ${process.env.DB_PORT}`);
     }
   }
   
   // Intentar conectar a la base de datos
-  console.log('\nIntentando conectar a la base de datos...');
+  console.log('\nIntentando conectar a la base de datos PostgreSQL...');
   
   const config = {
     host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
+    user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || '123456',
     database: process.env.DB_NAME || 'registro_pasajeros',
-    connectTimeout: 10000, // 10 segundos
-    ssl: isRender ? {rejectUnauthorized: true} : false // Habilitar SSL en Render
+    port: process.env.DB_PORT || 5432,
+    connectionTimeoutMillis: 10000, // 10 segundos
+    ssl: isRender ? { rejectUnauthorized: false } : false // Habilitar SSL en Render
   };
   
   // Mostrar información detallada de la conexión
@@ -79,74 +88,85 @@ async function checkRenderDb() {
   console.log(`- Host: ${config.host}`); 
   console.log(`- Usuario: ${config.user}`); 
   console.log(`- Base de datos: ${config.database}`);
+  console.log(`- Puerto: ${config.port}`);
   console.log(`- SSL: ${isRender ? 'Habilitado' : 'Deshabilitado'}`);
   
+  const pool = new Pool(config);
+  let client;
+
   try {
     console.log(`Conectando a ${config.host} con usuario ${config.user}...`);
-    const connection = await mysql.createConnection(config);
-    console.log('✅ Conexión exitosa a la base de datos');
+    client = await pool.connect();
+    console.log('✅ Conexión exitosa a la base de datos PostgreSQL');
     
     // Verificar que podemos ejecutar consultas
     console.log('\nVerificando consulta simple...');
-    const [rows] = await connection.execute('SELECT 1 as test');
-    console.log(`✅ Consulta exitosa: ${JSON.stringify(rows)}`);
+    const result = await client.query('SELECT 1 as test');
+    console.log(`✅ Consulta exitosa: ${JSON.stringify(result.rows)}`);
     
     // Verificar tablas existentes
     console.log('\nVerificando tablas existentes...');
-    const [tables] = await connection.execute('SHOW TABLES');
+    const tables = await client.query(
+      "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"
+    );
     console.log('Tablas encontradas:');
-    tables.forEach(table => {
-      const tableName = Object.values(table)[0];
-      console.log(`- ${tableName}`);
-    });
-    
-    await connection.end();
-    console.log('\nConexión cerrada correctamente');
-    return true;
-  } catch (error) {
-    console.error(`\n❌ ERROR DE CONEXIÓN: ${error.message}`);
-    console.error('Código de error:', error.code);
-    
-    // Sugerir soluciones según el error
-    console.log('\nPosibles soluciones:');
-    
-    if (error.code === 'ECONNREFUSED') {
-      console.log('- Verifica que la base de datos esté en ejecución');
-      console.log('- Asegúrate de que el host sea correcto');
-      console.log('- Verifica que no haya un firewall bloqueando la conexión');
-    } else if (error.code === 'ER_ACCESS_DENIED_ERROR') {
-      console.log('- Verifica que el usuario y contraseña sean correctos');
-      console.log('- Asegúrate de que el usuario tenga permisos para acceder a la base de datos');
-    } else if (error.code === 'ER_BAD_DB_ERROR') {
-      console.log('- La base de datos no existe, ejecuta el script de inicialización');
-      console.log('- Verifica que el nombre de la base de datos sea correcto');
-    } else if (error.code === 'ETIMEDOUT') {
-      console.log('- La conexión ha excedido el tiempo de espera');
-      console.log('- Verifica que la base de datos esté accesible desde tu ubicación');
-      console.log('- En Render, asegúrate de que los servicios estén en la misma región');
+    if (tables.rows.length === 0) {
+      console.log('- No se encontraron tablas');
     } else {
-      console.log('- Verifica la configuración en render.yaml');
-      console.log('- Asegúrate de que las variables de entorno estén correctamente definidas');
-      console.log('- Revisa los logs de Render para más información');
+      tables.rows.forEach(table => {
+        console.log(`- ${table.table_name}`);
+      });
     }
     
-    return false;
+    // Verificar si existen las tablas principales
+    const requiredTables = ['usuarios', 'rutas', 'registros'];
+    const existingTables = tables.rows.map(t => t.table_name);
+    const missingTables = requiredTables.filter(t => !existingTables.includes(t));
+    
+    if (missingTables.length > 0) {
+      console.log('\n⚠️ ADVERTENCIA: Faltan algunas tablas requeridas:');
+      missingTables.forEach(t => console.log(`- ${t}`));
+      console.log('Puede ser necesario inicializar la base de datos con: npm run init-db');
+    } else {
+      console.log('\n✅ Todas las tablas requeridas están presentes');
+    }
+    
+    client.release();
+    await pool.end();
+    
+    console.log('\n✅ Verificación de base de datos completada con éxito');
+    if (hasErrors) {
+      console.log('\n⚠️ Se encontraron algunos problemas que deben corregirse');
+      process.exit(1);
+    } else {
+      console.log('\n✅ Todo parece estar correctamente configurado');
+      process.exit(0);
+    }
+  } catch (error) {
+    console.error(`\n❌ Error al conectar a la base de datos: ${error.message}`);
+    if (client) client.release();
+    if (pool) await pool.end();
+    
+    if (isRender) {
+      console.error('\nPosibles soluciones para entorno Render:');
+      console.error('1. Verifica que el servicio de base de datos esté correctamente configurado en render.yaml');
+      console.error('2. Asegúrate de que las variables de entorno estén correctamente configuradas');
+      console.error('3. Verifica que la base de datos PostgreSQL esté creada y en ejecución');
+      console.error('4. Comprueba que el usuario tenga permisos para acceder a la base de datos');
+    } else {
+      console.error('\nPosibles soluciones para entorno local:');
+      console.error('1. Verifica que PostgreSQL esté instalado y en ejecución');
+      console.error('2. Comprueba las credenciales en el archivo .env');
+      console.error('3. Asegúrate de que la base de datos esté creada');
+    }
+    
+    process.exit(1);
   }
 }
 
-// Ejecutar la verificación
-checkRenderDb()
-  .then(success => {
-    console.log('\n=== RESULTADO FINAL ===');
-    if (success) {
-      console.log('✅ La configuración de la base de datos parece correcta.');
-      process.exit(0);
-    } else {
-      console.log('❌ Hay problemas con la configuración de la base de datos. Revisa los errores anteriores.');
-      process.exit(1);
-    }
-  })
-  .catch(err => {
-    console.error('Error inesperado:', err);
-    process.exit(1);
-  });
+// Si se ejecuta directamente este archivo
+if (require.main === module) {
+  checkRenderDb();
+}
+
+module.exports = { checkRenderDb };

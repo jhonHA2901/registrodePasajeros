@@ -1,4 +1,4 @@
-const mysql = require('mysql2/promise');
+const { Pool } = require('pg');
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
@@ -8,6 +8,7 @@ const sqlFilePath = path.join(__dirname, '..', 'sql', 'base_datos.sql');
 const sqlScript = fs.readFileSync(sqlFilePath, 'utf8');
 
 // Dividir el script en comandos individuales
+// PostgreSQL usa ';' como terminador de comandos
 const sqlCommands = sqlScript
   .replace(/\r\n/g, '\n')
   .split(';\n')
@@ -16,19 +17,17 @@ const sqlCommands = sqlScript
 async function initializeDatabase() {
   // Verificar si estamos en Render
   const isRender = process.env.RENDER_EXTERNAL_URL ? true : false;
-  console.log(`Entorno detectado: ${isRender ? 'Render (producción)' : 'Local (desarrollo)'}`);
+  console.log(`Entorno detectado: ${isRender ? 'Render (producción)' : 'Local (desarrollo)'}`); 
   
-  // Configuración para conectar sin especificar una base de datos
+  // Configuración para conectar a PostgreSQL
   const config = {
     host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
+    user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || '123456',
-    multipleStatements: true,
-    connectTimeout: 30000, // 30 segundos de timeout para la conexión
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0,
-    ssl: isRender ? {rejectUnauthorized: true} : false // Habilitar SSL en Render
+    port: process.env.DB_PORT || 5432,
+    // Inicialmente nos conectamos a la base de datos 'postgres' (base de datos por defecto)
+    database: 'postgres',
+    ssl: isRender ? { rejectUnauthorized: false } : false // Habilitar SSL en Render
   };
   
   // Mostrar información detallada de la conexión
@@ -36,36 +35,58 @@ async function initializeDatabase() {
   console.log(`- Entorno: ${isRender ? 'Render (producción)' : 'Local (desarrollo)'}`); 
   console.log(`- Host: ${config.host}`); 
   console.log(`- Usuario: ${config.user}`); 
+  console.log(`- Puerto: ${config.port}`);
   console.log(`- SSL: ${isRender ? 'Habilitado' : 'Deshabilitado'}`);
   
   console.log(`Intentando conectar a: ${config.host} con usuario: ${config.user}`);
 
-  let connection;
+  let pool;
+  let client;
   let retries = 5; // Número de intentos de conexión
   let connected = false;
 
   while (retries > 0 && !connected) {
     try {
-      console.log(`Intentando conectar a MySQL (${6-retries}/5)...`);
-      // Conectar a MySQL sin especificar una base de datos
-      connection = await mysql.createConnection(config);
+      console.log(`Intentando conectar a PostgreSQL (${6-retries}/5)...`);
+      // Crear un pool de conexiones
+      pool = new Pool(config);
+      // Obtener una conexión del pool
+      client = await pool.connect();
       connected = true;
-      console.log('Conectado a MySQL exitosamente');
+      console.log('Conectado a PostgreSQL exitosamente');
 
-      // Ejecutar cada comando SQL
-      for (const command of sqlCommands) {
-        const trimmedCommand = command.trim();
+      // Primero, intentamos crear la base de datos
+      try {
+        await client.query('CREATE DATABASE registro_pasajeros;');
+        console.log('Base de datos registro_pasajeros creada exitosamente');
+      } catch (dbError) {
+        // Si la base de datos ya existe, continuamos
+        if (dbError.code === '42P04') { // Código de error para base de datos ya existente
+          console.log('La base de datos registro_pasajeros ya existe, continuando...');
+        } else {
+          console.warn(`Advertencia al crear la base de datos: ${dbError.message}`);
+        }
+      }
+
+      // Cerramos la conexión actual
+      client.release();
+      await pool.end();
+
+      // Nos conectamos a la base de datos registro_pasajeros
+      config.database = 'registro_pasajeros';
+      pool = new Pool(config);
+      client = await pool.connect();
+      console.log('Conectado a la base de datos registro_pasajeros');
+
+      // Ejecutar cada comando SQL excepto el CREATE DATABASE y \c
+      for (let i = 2; i < sqlCommands.length; i++) {
+        const trimmedCommand = sqlCommands[i].trim();
         if (trimmedCommand) {
           try {
-            await connection.query(trimmedCommand + ';');
+            await client.query(trimmedCommand + ';');
             console.log(`Comando ejecutado: ${trimmedCommand.substring(0, 50)}...`);
           } catch (cmdError) {
-            // Si el error es porque la base de datos ya existe, continuamos
-            if (cmdError.code === 'ER_DB_CREATE_EXISTS') {
-              console.log('La base de datos ya existe, continuando...');
-            } else {
-              console.warn(`Advertencia al ejecutar comando: ${cmdError.message}`);
-            }
+            console.warn(`Advertencia al ejecutar comando: ${cmdError.message}`);
           }
         }
       }
@@ -80,10 +101,13 @@ async function initializeDatabase() {
         await new Promise(resolve => setTimeout(resolve, 5000)); // Esperar 5 segundos antes de reintentar
       }
     } finally {
-      if (connection) {
-        await connection.end();
-        console.log('Conexión cerrada');
+      if (client) {
+        client.release();
       }
+      if (pool) {
+        await pool.end();
+      }
+      console.log('Conexión cerrada');
     }
   }
   
@@ -99,9 +123,12 @@ module.exports = { initializeDatabase };
 // Si se ejecuta directamente este archivo
 if (require.main === module) {
   initializeDatabase()
-    .then(() => process.exit(0))
-    .catch(err => {
-      console.error('Error en la inicialización:', err);
+    .then(() => {
+      console.log('Inicialización completada');
+      process.exit(0);
+    })
+    .catch(error => {
+      console.error('Error durante la inicialización:', error);
       process.exit(1);
     });
 }

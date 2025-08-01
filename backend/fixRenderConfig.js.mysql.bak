@@ -1,7 +1,6 @@
 /**
  * Script para corregir automáticamente problemas comunes de configuración en Render
  * Este script se ejecuta antes de iniciar el servidor en entorno de Render
- * Adaptado para PostgreSQL
  */
 
 // Verificar si estamos en Render
@@ -12,7 +11,7 @@ if (!isRender) {
   process.exit(0); // Salir sin error en entorno local
 }
 
-console.log('🔧 Iniciando corrección automática de configuración en Render para PostgreSQL...');
+console.log('🔧 Iniciando corrección automática de configuración en Render...');
 
 // Verificar y corregir problemas comunes
 let configFixed = false;
@@ -25,10 +24,10 @@ if (!process.env.DB_HOST || process.env.DB_HOST === 'localhost' || process.env.D
   process.exit(1); // Error crítico que no se puede corregir automáticamente
 }
 
-// 2. Verificar SSL para PostgreSQL
-if (!process.env.PGSSLMODE) {
-  console.log('ℹ️ Configurando SSL para PostgreSQL en Render...');
-  process.env.PGSSLMODE = 'require';
+// 2. Verificar SSL para MySQL
+if (!process.env.MYSQL_ATTR_SSL_CA) {
+  console.log('ℹ️ Configurando SSL para MySQL en Render...');
+  process.env.MYSQL_ATTR_SSL_CA = 'true';
   configFixed = true;
 }
 
@@ -43,13 +42,6 @@ if (!process.env.DB_CONNECTION_TIMEOUT) {
 if (!process.env.DB_CONNECTION_RETRIES) {
   console.log('ℹ️ Configurando número de reintentos de conexión...');
   process.env.DB_CONNECTION_RETRIES = '5';
-  configFixed = true;
-}
-
-// 5. Verificar puerto de PostgreSQL
-if (!process.env.DB_PORT) {
-  console.log('ℹ️ Configurando puerto por defecto para PostgreSQL...');
-  process.env.DB_PORT = '5432';
   configFixed = true;
 }
 

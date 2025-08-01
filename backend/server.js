@@ -40,11 +40,7 @@ async function startServer() {
     // Verificar si estamos en Render
     const isRender = process.env.RENDER_EXTERNAL_URL ? true : false;
     
-    // Verificar configuración de la base de datos
-    if (isRender && (process.env.DB_HOST === 'localhost' || !process.env.DB_HOST)) {
-      throw new Error('ERROR CRÍTICO: DB_HOST está configurado como localhost o no está definido en Render. ' +
-                     'Esto causará fallos de conexión. Verifica la configuración en render.yaml');
-    }
+    // La verificación de la conexión a la base de datos se realiza más adelante con testConnection()
     
     // Mostrar variables de entorno (sin mostrar contraseñas)
     console.log('Variables de entorno de conexión a la base de datos: ');
