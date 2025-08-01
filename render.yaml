@@ -1,10 +1,5 @@
 services:
-  # 1. Base de datos PostgreSQL
-  # Esta definición asume que ya tienes una base de datos llamada 'registrop1-db' en Render.
-  # Si tiene otro nombre, por favor ajústalo aquí y en las referencias de abajo.
-  - type: psql
-    name: registrop1-db
-    plan: free
+
 
   # 2. Backend - Servicio Web para la API (Node.js)
   - type: web
