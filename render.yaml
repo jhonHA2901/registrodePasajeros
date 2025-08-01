@@ -1,3 +1,4 @@
+# Forzar re-despliegue
 services:
   # Servicio para el backend
   - type: web
