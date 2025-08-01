@@ -4,25 +4,16 @@
   "description": "Aplicación web para el registro de pasajeros del Metropolitano en la ruta Lima - Chorrillos",
   "main": "backend/server.js",
   "scripts": {
-    "start": "cd backend && npm install && node server.js",
-    "dev": "nodemon backend/server.js",
-    "install-backend": "cd backend && npm install",
-    "build": "cd backend && npm install",
-    "check-deployment": "node checkDeployment.js",
-    "render-info": "cd backend && node renderInfo.js",
-    "check-db": "cd backend && node checkDbConnection.js",
-    "check-render-db": "cd backend && node checkRenderDb.js",
-    "check-cors": "cd backend && node checkCors.js",
-    "check-security": "cd backend && node checkSecurity.js",
-    "check-performance": "cd backend && node checkPerformance.js",
-    "verify-render": "node verifyRenderDeployment.js"
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js"
   },
   "keywords": [
     "metropolitano",
     "pasajeros",
     "registro",
     "express",
-    "mysql"
+    "mysql",
+    "postgres"
   ],
   "author": "",
   "license": "ISC",
@@ -31,7 +22,8 @@
     "bcrypt": "^5.1.0",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
-    "mysql2": "^3.3.1"
+    "mysql2": "^3.3.1",
+    "pg": "^8.11.3"
   },
   "devDependencies": {
     "nodemon": "^2.0.22"

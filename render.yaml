@@ -5,7 +5,7 @@ services:
     name: registrop1-backend
     env: node
     region: ohio
-    buildCommand: ./render-build.sh
+    buildCommand: npm install
     startCommand: node backend/server.js
     envVars:
       - key: NODE_ENV
