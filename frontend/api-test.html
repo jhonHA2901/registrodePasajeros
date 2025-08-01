@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba de Conexión API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background-color: #f8f9fa;
+            padding: 10px;
+            margin: -15px -15px 15px;
+            border-bottom: 1px solid #ddd;
+            font-weight: bold;
+        }
+        .success {
+            color: #28a745;
+        }
+        .error {
+            color: #dc3545;
+        }
+        .warning {
+            color: #ffc107;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #0069d9;
+        }
+        .result-container {
+            margin-top: 20px;
+        }
+        #loading {
+            display: none;
+            margin-left: 10px;
+        }
+        .endpoint-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .endpoint-list li {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .endpoint-list li:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Prueba de Conexión API</h1>
+        
+        <div class="card">
+            <div class="card-header">Información de Configuración</div>
+            <div id="config-info">
+                <p>Cargando información de configuración...</p>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">Prueba de Endpoints</div>
+            <p>Selecciona un endpoint para probar:</p>
+            <ul class="endpoint-list">
+                <li><button onclick="testEndpoint('/api/test')">Prueba General (/api/test)</button></li>
+                <li><button onclick="testEndpoint('/api/pasajeros')">Listar Pasajeros (/api/pasajeros)</button></li>
+                <li><button onclick="testEndpoint('/api/usuarios')">Listar Usuarios (/api/usuarios)</button></li>
+            </ul>
+            
+            <div class="result-container">
+                <button onclick="testAllEndpoints()">Probar Todos los Endpoints</button>
+                <span id="loading">Probando...</span>
+                <div id="test-results" class="result-container">
+                    <!-- Aquí se mostrarán los resultados -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">Diagnóstico de Conexión</div>
+            <button onclick="runDiagnostic()">Ejecutar Diagnóstico Completo</button>
+            <div id="diagnostic-results" class="result-container">
+                <!-- Aquí se mostrarán los resultados del diagnóstico -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Incluir el archivo de configuración -->
+    <script src="./js/config.js"></script>
+    
+    <script>
+        // Mostrar información de configuración
+        function showConfigInfo() {
+            const configInfo = document.getElementById('config-info');
+            const apiUrl = getApiUrl();
+            const isProduction = window.location.hostname.includes('render.com') || 
+                               window.location.hostname.includes('onrender.com');
+            
+            let html = `
+                <p><strong>URL de la API:</strong> ${apiUrl}</p>
+                <p><strong>Entorno:</strong> ${isProduction ? 'Producción (Render)' : 'Desarrollo Local'}</p>
+                <p><strong>Hostname:</strong> ${window.location.hostname}</p>
+                <p><strong>Protocolo:</strong> ${window.location.protocol}</p>
+            `;
+            
+            configInfo.innerHTML = html;
+        }
+        
+        // Probar un endpoint específico
+        async function testEndpoint(endpoint) {
+            const resultsDiv = document.getElementById('test-results');
+            const loadingSpan = document.getElementById('loading');
+            loadingSpan.style.display = 'inline';
+            
+            const apiUrl = getApiUrl();
+            const fullUrl = apiUrl + endpoint.replace('/api', '');
+            
+            try {
+                const startTime = Date.now();
+                const response = await fetch(fullUrl);
+                const endTime = Date.now();
+                const responseTime = endTime - startTime;
+                
+                let resultHtml = `
+                    <div class="card">
+                        <div class="card-header">Resultado: ${endpoint}</div>
+                        <p><strong>URL:</strong> ${fullUrl}</p>
+                        <p><strong>Tiempo de respuesta:</strong> ${responseTime}ms</p>
+                        <p><strong>Estado:</strong> <span class="${response.ok ? 'success' : 'error'}">${response.status} ${response.statusText}</span></p>
+                `;
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultHtml += `
+                        <p><strong>Respuesta:</strong></p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultHtml += `
+                        <p class="error"><strong>Error:</strong> No se pudo obtener una respuesta válida</p>
+                    `;
+                }
+                
+                resultHtml += `</div>`;
+                resultsDiv.innerHTML = resultHtml + resultsDiv.innerHTML;
+            } catch (error) {
+                const resultHtml = `
+                    <div class="card">
+                        <div class="card-header">Resultado: ${endpoint}</div>
+                        <p><strong>URL:</strong> ${fullUrl}</p>
+                        <p class="error"><strong>Error:</strong> ${error.message}</p>
+                        <p>Posibles causas:</p>
+                        <ul>
+                            <li>El backend no está en ejecución</li>
+                            <li>La URL de la API es incorrecta</li>
+                            <li>Hay problemas de CORS</li>
+                            <li>Problemas de red</li>
+                        </ul>
+                    </div>
+                `;
+                resultsDiv.innerHTML = resultHtml + resultsDiv.innerHTML;
+            } finally {
+                loadingSpan.style.display = 'none';
+            }
+        }
+        
+        // Probar todos los endpoints
+        async function testAllEndpoints() {
+            document.getElementById('test-results').innerHTML = '';
+            await testEndpoint('/api/test');
+            await testEndpoint('/api/pasajeros');
+            await testEndpoint('/api/usuarios');
+        }
+        
+        // Ejecutar diagnóstico completo
+        async function runDiagnostic() {
+            const diagnosticDiv = document.getElementById('diagnostic-results');
+            diagnosticDiv.innerHTML = '<p>Ejecutando diagnóstico...</p>';
+            
+            const apiUrl = getApiUrl();
+            
+            // Verificar conectividad básica
+            let diagnosticHtml = `
+                <h3>Resultados del Diagnóstico</h3>
+                <p><strong>URL de la API:</strong> ${apiUrl}</p>
+            `;
+            
+            // Probar conexión al servidor
+            try {
+                const startTime = Date.now();
+                const response = await fetch(apiUrl + '/test');
+                const endTime = Date.now();
+                const responseTime = endTime - startTime;
+                
+                if (response.ok) {
+                    diagnosticHtml += `
+                        <p class="success">✅ Conexión al servidor exitosa (${responseTime}ms)</p>
+                    `;
+                } else {
+                    diagnosticHtml += `
+                        <p class="error">❌ Error en la respuesta del servidor: ${response.status} ${response.statusText}</p>
+                    `;
+                }
+            } catch (error) {
+                diagnosticHtml += `
+                    <p class="error">❌ No se pudo conectar al servidor: ${error.message}</p>
+                `;
+            }
+            
+            // Verificar CORS
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'OPTIONS',
+                    headers: {
+                        'Origin': window.location.origin
+                    }
+                });
+                
+                const corsHeaders = {
+                    'Access-Control-Allow-Origin': response.headers.get('Access-Control-Allow-Origin'),
+                    'Access-Control-Allow-Methods': response.headers.get('Access-Control-Allow-Methods'),
+                    'Access-Control-Allow-Headers': response.headers.get('Access-Control-Allow-Headers')
+                };
+                
+                if (corsHeaders['Access-Control-Allow-Origin']) {
+                    diagnosticHtml += `
+                        <p class="success">✅ Configuración CORS detectada</p>
+                        <pre>${JSON.stringify(corsHeaders, null, 2)}</pre>
+                    `;
+                } else {
+                    diagnosticHtml += `
+                        <p class="warning">⚠️ No se detectaron cabeceras CORS</p>
+                    `;
+                }
+            } catch (error) {
+                diagnosticHtml += `
+                    <p class="warning">⚠️ Error al verificar CORS: ${error.message}</p>
+                `;
+            }
+            
+            // Verificar latencia
+            try {
+                const times = [];
+                for (let i = 0; i < 3; i++) {
+                    const startTime = Date.now();
+                    await fetch(apiUrl + '/test');
+                    const endTime = Date.now();
+                    times.push(endTime - startTime);
+                }
+                
+                const avgTime = times.reduce((a, b) => a + b, 0) / times.length;
+                
+                diagnosticHtml += `
+                    <p><strong>Latencia promedio:</strong> ${avgTime.toFixed(2)}ms</p>
+                `;
+                
+                if (avgTime < 200) {
+                    diagnosticHtml += `<p class="success">✅ Latencia excelente</p>`;
+                } else if (avgTime < 500) {
+                    diagnosticHtml += `<p class="success">✅ Latencia buena</p>`;
+                } else if (avgTime < 1000) {
+                    diagnosticHtml += `<p class="warning">⚠️ Latencia aceptable</p>`;
+                } else {
+                    diagnosticHtml += `<p class="error">❌ Latencia alta</p>`;
+                }
+            } catch (error) {
+                diagnosticHtml += `
+                    <p class="error">❌ Error al medir latencia: ${error.message}</p>
+                `;
+            }
+            
+            // Recomendaciones
+            diagnosticHtml += `
+                <h3>Recomendaciones</h3>
+                <ul>
+                    <li>Si hay problemas de conexión, verifica que el backend esté en ejecución</li>
+                    <li>Asegúrate de que la URL de la API sea correcta en config.js</li>
+                    <li>Verifica que el backend tenga CORS configurado correctamente</li>
+                    <li>En entorno de producción, asegúrate de que los servicios de Render estén activos</li>
+                </ul>
+            `;
+            
+            diagnosticDiv.innerHTML = diagnosticHtml;
+        }
+        
+        // Inicializar la página
+        document.addEventListener('DOMContentLoaded', () => {
+            showConfigInfo();
+        });
+    </script>
+</body>
+</html>

@@ -14,17 +14,23 @@ const sqlCommands = sqlScript
   .filter(command => command.trim() !== '');
 
 async function initializeDatabase() {
+  // Verificar si estamos en Render
+  const isRender = process.env.RENDER_EXTERNAL_URL ? true : false;
+  console.log(`Entorno detectado: ${isRender ? 'Render (producción)' : 'Local (desarrollo)'}`);
+  
   // Configuración para conectar sin especificar una base de datos
   const config = {
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '123456',
     multipleStatements: true,
-    connectTimeout: 10000, // 10 segundos de timeout para la conexión
+    connectTimeout: 30000, // 30 segundos de timeout para la conexión
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
   };
+  
+  console.log(`Intentando conectar a: ${config.host} con usuario: ${config.user}`);
 
   let connection;
   let retries = 5; // Número de intentos de conexión

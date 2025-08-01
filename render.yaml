@@ -3,8 +3,9 @@ services:
   - type: web
     name: registrop1-backend
     env: node
-    buildCommand: npm install && cd backend && npm install && npm run build
-    startCommand: cd backend && npm start
+    region: ohio
+    buildCommand: npm install && cd backend && npm install
+    startCommand: cd backend && npm run check-render-db && npm start
     envVars:
       - key: NODE_ENV
         value: production
@@ -40,6 +41,9 @@ services:
       - type: rewrite
         source: /*
         destination: /index.html
+    # Asegurar que el backend esté disponible antes de iniciar el frontend
+    dependsOn:
+      - registrop1-backend
 
 databases:
   # Base de datos MySQL

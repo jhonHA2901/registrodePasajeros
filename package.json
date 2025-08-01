@@ -7,7 +7,15 @@
     "start": "cd backend && npm install && node server.js",
     "dev": "nodemon backend/server.js",
     "install-backend": "cd backend && npm install",
-    "build": "cd backend && npm install"
+    "build": "cd backend && npm install",
+    "check-deployment": "node checkDeployment.js",
+    "render-info": "cd backend && node renderInfo.js",
+    "check-db": "cd backend && node checkDbConnection.js",
+    "check-render-db": "cd backend && node checkRenderDb.js",
+    "check-cors": "cd backend && node checkCors.js",
+    "check-security": "cd backend && node checkSecurity.js",
+    "check-performance": "cd backend && node checkPerformance.js",
+    "verify-render": "node verifyRenderDeployment.js"
   },
   "keywords": [
     "metropolitano",

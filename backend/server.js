@@ -1,3 +1,4 @@
+// Importar dependencias
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
@@ -9,6 +10,7 @@ const authRoutes = require('./routes/auth');
 const rutasRoutes = require('./routes/rutas');
 const registrosRoutes = require('./routes/registros');
 
+// Configuración del servidor
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -31,11 +33,12 @@ app.get('/', (req, res) => {
 async function startServer() {
   try {
     // Mostrar variables de entorno (sin mostrar contraseñas)
-    console.log('Variables de entorno de conexión a la base de datos:');
+    console.log('Variables de entorno de conexión a la base de datos: ');
     console.log(`- DB_HOST: ${process.env.DB_HOST || 'localhost'}`);
     console.log(`- DB_USER: ${process.env.DB_USER || 'root'}`);
     console.log(`- DB_NAME: ${process.env.DB_NAME || 'registro_pasajeros'}`);
     console.log(`- NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`- RENDER_EXTERNAL_URL: ${process.env.RENDER_EXTERNAL_URL || 'no definido'}`); // Verificar si estamos en Render
     
     // Intentar inicializar la base de datos
     console.log('Intentando inicializar la base de datos...');

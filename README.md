@@ -147,13 +147,39 @@ Abrir el navegador y acceder a:
 
 ## Despliegue en Render
 
+Este proyecto incluye un conjunto completo de herramientas para verificar y solucionar problemas de despliegue en Render.
+
+### Herramientas de Verificación de Despliegue
+
+```bash
+# Verificación completa del despliegue en Render
+npm run verify-render
+
+# Verificar configuración de Render
+npm run render-info
+
+# Verificar conexión a la base de datos en Render
+npm run check-render-db
+
+# Verificar configuración CORS
+npm run check-cors
+
+# Verificar configuración de seguridad
+npm run check-security
+
+# Verificar rendimiento
+npm run check-performance
+```
+
+Para instrucciones detalladas sobre el despliegue en Render, consulta el archivo [DEPLOY_RENDER.md](./DEPLOY_RENDER.md).
+
 ### Backend
 
 1. Crear un nuevo servicio web en Render
 2. Conectar con el repositorio de GitHub
 3. Configurar:
    - Build Command: `npm install`
-   - Start Command: `node server.js`
+   - Start Command: `npm run check-render-db && node server.js`
    - Agregar variables de entorno para la base de datos
 
 ### Frontend
