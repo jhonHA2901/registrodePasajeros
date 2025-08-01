@@ -190,9 +190,9 @@ async function runPerformanceTests() {
   try {
     const startNetTime = performance.now();
     
-    // Realizar una solicitud HTTP local
+    // Realizar una solicitud HTTP local usando la IP específica
     await new Promise((resolve, reject) => {
-      const req = http.get('http://localhost:3000/health', (res) => {
+      const req = http.get('http://192.168.2.42:3000/health', (res) => {
         let data = '';
         res.on('data', (chunk) => {
           data += chunk;

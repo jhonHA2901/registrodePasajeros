@@ -16,10 +16,8 @@ const API_CONFIG = {
             return 'https://registrop1-backend.onrender.com/api';
         } else {
             console.log('Entorno detectado: Desarrollo local');
-            // Usar localhost en lugar de IP específica para mayor compatibilidad
-            return window.location.hostname.includes('192.168') 
-                ? `http://${window.location.hostname}:3000/api`
-                : 'http://localhost:3000/api';
+            // Usar la IP local detectada en el navegador
+            return 'http://' + window.location.hostname + ':3000/api';
         }
     }
 };

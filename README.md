@@ -120,8 +120,8 @@ npm start
 6. **Acceder a la Aplicación**
 
 Abrir el navegador y acceder a:
-- Frontend: `http://localhost:5500/frontend` (usando Live Server o similar)
-- Backend API: `http://localhost:3000`
+- Frontend: `http://192.168.2.42:8080/frontend` 
+- Backend API: `http://192.168.2.42:3000`
 
 ## Credenciales por Defecto
 

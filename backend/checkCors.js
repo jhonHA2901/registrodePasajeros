@@ -18,8 +18,8 @@ function getFrontendUrl() {
     // En Render, el frontend debería estar en registrop1-frontend.onrender.com
     return 'https://registrop1-frontend.onrender.com';
   } else {
-    // En desarrollo local, asumimos que el frontend está en localhost:8080
-    return 'http://localhost:8080';
+    // En desarrollo local, usamos la IP específica
+    return 'http://192.168.2.42:8080';
   }
 }
 
@@ -110,16 +110,17 @@ async function testCorsServer() {
     
     // Usar un puerto diferente al de la aplicación principal
     const testPort = 3001;
+    const HOST = '192.168.2.42';
     
-    server.listen(testPort, () => {
-      console.log(`✅ Servidor de prueba CORS iniciado en puerto ${testPort}`);
-      console.log(`   URL de prueba: http://localhost:${testPort}/cors-test`);
+    server.listen(testPort, HOST, () => {
+      console.log(`✅ Servidor de prueba CORS iniciado en ${HOST}:${testPort}`);
+      console.log(`   URL de prueba: http://${HOST}:${testPort}/cors-test`);
       
       // Resolver con la información del servidor
       resolve({
         server,
         port: testPort,
-        url: `http://localhost:${testPort}/cors-test`
+        url: `http://${HOST}:${testPort}/cors-test`
       });
     });
   });

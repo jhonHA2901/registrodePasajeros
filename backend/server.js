@@ -15,7 +15,12 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors());
+// Configuración de CORS para permitir solicitudes desde cualquier origen en desarrollo local
+app.use(cors({
+  origin: true, // Permitir cualquier origen
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -59,8 +64,10 @@ async function startServer() {
     const dbConnected = await testConnection();
     
     if (dbConnected) {
-      app.listen(PORT, '0.0.0.0', () => {
-        console.log(`Servidor corriendo en http://${isRender ? process.env.RENDER_EXTERNAL_URL : '0.0.0.0:' + PORT}`);
+      // Usar 0.0.0.0 para escuchar en todas las interfaces
+      const HOST = '0.0.0.0';
+      app.listen(PORT, HOST, () => {
+        console.log(`Servidor corriendo en http://${isRender ? process.env.RENDER_EXTERNAL_URL : HOST + ':' + PORT}`);
       });
     } else {
       const errorMsg = 'No se pudo iniciar el servidor debido a problemas con la base de datos';
