@@ -4,6 +4,8 @@ services:
     name: registrop1-frontend
     runtime: static # Y el runtime es 'static'
     rootDir: frontend
+    # La ruta que contiene los archivos públicos, relativa a la raíz del repo.
+    staticPublishPath: frontend
     routes:
       - type: rewrite
         source: /*
