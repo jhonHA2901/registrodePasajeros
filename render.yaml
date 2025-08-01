@@ -26,6 +26,9 @@ services:
         fromDatabase:
           name: registrop1-db
           property: database
+    # Asegurar que la base de datos esté disponible antes de iniciar el backend
+    dependsOn:
+      - registrop1-db
 
   # Servicio para el frontend
   - type: web

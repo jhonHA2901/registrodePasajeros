@@ -19,33 +19,63 @@ async function initializeDatabase() {
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '123456',
-    multipleStatements: true
+    multipleStatements: true,
+    connectTimeout: 10000, // 10 segundos de timeout para la conexión
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
   };
 
   let connection;
+  let retries = 5; // Número de intentos de conexión
+  let connected = false;
 
-  try {
-    // Conectar a MySQL sin especificar una base de datos
-    connection = await mysql.createConnection(config);
-    console.log('Conectado a MySQL');
+  while (retries > 0 && !connected) {
+    try {
+      console.log(`Intentando conectar a MySQL (${6-retries}/5)...`);
+      // Conectar a MySQL sin especificar una base de datos
+      connection = await mysql.createConnection(config);
+      connected = true;
+      console.log('Conectado a MySQL exitosamente');
 
-    // Ejecutar cada comando SQL
-    for (const command of sqlCommands) {
-      const trimmedCommand = command.trim();
-      if (trimmedCommand) {
-        await connection.query(trimmedCommand + ';');
-        console.log(`Comando ejecutado: ${trimmedCommand.substring(0, 50)}...`);
+      // Ejecutar cada comando SQL
+      for (const command of sqlCommands) {
+        const trimmedCommand = command.trim();
+        if (trimmedCommand) {
+          try {
+            await connection.query(trimmedCommand + ';');
+            console.log(`Comando ejecutado: ${trimmedCommand.substring(0, 50)}...`);
+          } catch (cmdError) {
+            // Si el error es porque la base de datos ya existe, continuamos
+            if (cmdError.code === 'ER_DB_CREATE_EXISTS') {
+              console.log('La base de datos ya existe, continuando...');
+            } else {
+              console.warn(`Advertencia al ejecutar comando: ${cmdError.message}`);
+            }
+          }
+        }
+      }
+
+      console.log('Base de datos inicializada correctamente');
+      return true; // Indicar que la inicialización fue exitosa
+    } catch (error) {
+      console.error(`Intento ${6-retries}/5 fallido: ${error.message}`);
+      retries--;
+      if (retries > 0) {
+        console.log(`Reintentando en 5 segundos...`);
+        await new Promise(resolve => setTimeout(resolve, 5000)); // Esperar 5 segundos antes de reintentar
+      }
+    } finally {
+      if (connection) {
+        await connection.end();
+        console.log('Conexión cerrada');
       }
     }
-
-    console.log('Base de datos inicializada correctamente');
-  } catch (error) {
-    console.error('Error al inicializar la base de datos:', error);
-  } finally {
-    if (connection) {
-      await connection.end();
-      console.log('Conexión cerrada');
-    }
+  }
+  
+  if (!connected) {
+    console.error('No se pudo conectar a la base de datos después de varios intentos');
+    throw new Error('No se pudo conectar a la base de datos');
   }
 }
 
