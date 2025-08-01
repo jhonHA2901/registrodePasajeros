@@ -1,5 +1,5 @@
 // Configuración de la URL base de la API
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'http://192.168.2.42:3000/api';
 
 // Elementos del DOM
 const nuevaRutaForm = document.getElementById('nueva-ruta-form');

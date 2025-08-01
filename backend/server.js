@@ -32,8 +32,8 @@ async function startServer() {
     const dbConnected = await testConnection();
     
     if (dbConnected) {
-      app.listen(PORT, () => {
-        console.log(`Servidor corriendo en http://localhost:${PORT}`);
+      app.listen(PORT, '0.0.0.0', () => {
+        console.log(`Servidor corriendo en http://192.168.2.42:${PORT}`);
       });
     } else {
       console.error('No se pudo iniciar el servidor debido a problemas con la base de datos');
