@@ -1,5 +1,7 @@
 const { Pool } = require('pg');
-require('dotenv').config();
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
 
 // Verificar si estamos en Render
 const isRender = process.env.RENDER_EXTERNAL_URL ? true : false;
