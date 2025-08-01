@@ -39,4 +39,4 @@ config.local.js
 # Archivos temporales
 /tmp
 /temp
-temp-repo/
+# temp-repo/ - Comentado para permitir añadir archivos

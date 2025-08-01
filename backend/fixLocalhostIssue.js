@@ -34,6 +34,10 @@ if (!process.env.DB_HOST || process.env.DB_HOST === 'localhost' || process.env.D
   console.log('     fromDatabase:');
   console.log(`       name: ${renderDbService}`);
   console.log('       property: host');
+  console.log('   - key: DB_USER');
+  console.log('     fromDatabase:');
+  console.log(`       name: ${renderDbService}`);
+  console.log('       property: username');
   console.log('   ```');
 } else {
   console.log(`✅ DB_HOST está configurado correctamente: ${process.env.DB_HOST}`);
