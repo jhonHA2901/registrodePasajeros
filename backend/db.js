@@ -8,17 +8,22 @@ const isRender = process.env.RENDER_EXTERNAL_URL ? true : false;
 console.log(`Entorno detectado en db.js: ${isRender ? 'Render (producción)' : 'Local (desarrollo)'}`); 
 
 // Configuración de la conexión a la base de datos PostgreSQL
-const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || '123456',  // Contraseña para PostgreSQL
-  database: process.env.DB_NAME || 'registro_pasajeros',
-  port: process.env.DB_PORT || 5432,  // Puerto por defecto de PostgreSQL
-  max: 10, // Máximo de conexiones en el pool
-  idleTimeoutMillis: 30000, // Tiempo máximo que una conexión puede estar inactiva
-  connectionTimeoutMillis: 60000, // 60 segundos de timeout para la conexión
-  ssl: isRender ? { rejectUnauthorized: false } : false // Habilitar SSL en Render
-});
+const poolConfig = isRender
+  ? {
+      // Configuración para Render (producción)
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false } // Requerido por Render
+    }
+  : {
+      // Configuración para desarrollo (local)
+      host: process.env.DB_HOST || 'localhost',
+      user: process.env.DB_USER || 'postgres',
+      password: process.env.DB_PASSWORD || '123456',
+      database: process.env.DB_NAME || 'registro_pasajeros',
+      port: process.env.DB_PORT || 5432
+    };
+
+const pool = new Pool(poolConfig);
 
 // Función para probar la conexión
 async function testConnection() {
